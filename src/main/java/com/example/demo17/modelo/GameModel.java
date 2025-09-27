@@ -48,8 +48,10 @@ public class GameModel {
     /** Levels interval for time reduction */
     private static final int LEVEL_INTERVAL = 5;
 
+    private  boolean booleano;
 
 
+;;
     public GameModel() {
         this.random = new Random();
         this.wordBank = initializeWordBank();
