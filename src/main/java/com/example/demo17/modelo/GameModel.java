@@ -1,11 +1,9 @@
 package com.example.demo17.modelo;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
 
 public class GameModel {
 
@@ -33,7 +31,10 @@ public class GameModel {
     /** Indicates if the current level is completed successfully */
     private boolean levelCompleted;
 
-    /** Maximum levels completed in the current game session */
+    /** Maximum levels completed successfully in the current game session */
+    private int currentGameLevelsCompleted;
+
+    /** Historical maximum levels completed across all game sessions */
     private int maxLevelsCompleted;
 
     /** Initial time limit for level 1 */
@@ -48,16 +49,15 @@ public class GameModel {
     /** Levels interval for time reduction */
     private static final int LEVEL_INTERVAL = 5;
 
-    private  boolean booleano;
+    private boolean booleano;
+    private double numerod;
 
-
-;;
     public GameModel() {
         this.random = new Random();
         this.wordBank = initializeWordBank();
+        this.maxLevelsCompleted = 0; // Inicializar el récord histórico
         resetGame();
     }
-
 
     private List<String> initializeWordBank() {
         return new ArrayList<>(Arrays.asList(
@@ -77,11 +77,10 @@ public class GameModel {
                 "la programacion es divertida", "java es un lenguaje potente",
                 "el desarrollo web moderno", "interfaces graficas intuitivas",
                 "experiencia de usuario excelente", "codigo limpio y mantenible",
-                "patrones de diseño efectivos", "algoritmos y estructuras de datos",
+                "patrones de diseÃ±o efectivos", "algoritmos y estructuras de datos",
                 "desarrollo orientado a eventos", "aplicaciones escalables y robustas"
         ));
     }
-
 
     public void resetGame() {
         this.currentLevel = 1;
@@ -89,19 +88,15 @@ public class GameModel {
         this.remainingTime = timeLimit;
         this.gameRunning = false;
         this.levelCompleted = false;
-        this.maxLevelsCompleted = 0;
+        this.currentGameLevelsCompleted = 0; // Solo resetea los niveles de la partida actual
+        // maxLevelsCompleted NO se resetea para mantener el récord histórico
         generateNewWord();
     }
-
-
 
     public void startGame() {
         this.gameRunning = true;
         this.remainingTime = timeLimit;
-
     }
-
-
 
     public void generateNewWord() {
         if (wordBank.isEmpty()) {
@@ -128,8 +123,6 @@ public class GameModel {
         this.currentWord = wordBank.get(Math.min(wordIndex, wordBank.size() - 1));
     }
 
-
-
     public boolean validateInput(String userInput) {
         if (userInput == null) {
             return false;
@@ -137,19 +130,22 @@ public class GameModel {
         return userInput.trim().equals(currentWord);
     }
 
-
     public void completeLevel(boolean success) {
         this.levelCompleted = success;
 
         if (success) {
+            // Actualizar niveles completados en la partida actual
+            this.currentGameLevelsCompleted = currentLevel;
+
+            // Actualizar el récord histórico si se supera
             this.maxLevelsCompleted = Math.max(maxLevelsCompleted, currentLevel);
+
             advanceToNextLevel();
         } else {
+            // Si fallas, el juego termina
             this.gameRunning = false;
         }
     }
-
-
 
     private void advanceToNextLevel() {
         this.currentLevel++;
@@ -163,8 +159,6 @@ public class GameModel {
         generateNewWord();
     }
 
-
-
     public boolean decrementTime() {
         if (remainingTime > 0) {
             remainingTime--;
@@ -173,46 +167,36 @@ public class GameModel {
         return false;
     }
 
-
-
     public double getTimeProgress() {
         if (timeLimit == 0) return 0.0;
         return (double) remainingTime / timeLimit;
     }
 
-
-
-
     public int getCurrentLevel() {
         return currentLevel;
     }
-
 
     public String getCurrentWord() {
         return currentWord;
     }
 
-
     public int getRemainingTime() {
         return remainingTime;
     }
-
 
     public boolean isGameRunning() {
         return gameRunning;
     }
 
-
-
     public int getMaxLevelsCompleted() {
         return maxLevelsCompleted;
     }
 
+    public int getCurrentGameLevelsCompleted() {
+        return currentGameLevelsCompleted;
+    }
 
     public void stopGame() {
         this.gameRunning = false;
     }
-
-
-
 }

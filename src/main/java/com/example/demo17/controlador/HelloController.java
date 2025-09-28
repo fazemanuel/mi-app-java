@@ -310,38 +310,37 @@ public class HelloController implements Initializable {
 
 
     private void showGameOverDialog() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("¡Juego Terminado!");
+        alert.setHeaderText("Resumen de la Partida");
 
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("¡Juego Terminado!");
-                alert.setHeaderText("Resumen de la Partida");
+        String summary = String.format(
+                "Niveles completados esta partida: %d\n" +
+                        "Récord histórico: %d\n" +
+                        "Palabra final: %s\n" +
+                        "¿Deseas jugar de nuevo?",
+                gameModel.getCurrentGameLevelsCompleted(),
+                gameModel.getMaxLevelsCompleted(),
+                gameModel.getCurrentWord()
+        );
 
-                String summary = String.format(
-                        "Niveles completados: %d\n" +
-                                "Palabra final: %s\n" +
-                                "¿Deseas jugar de nuevo?",
-                        gameModel.getMaxLevelsCompleted(),
-                        gameModel.getCurrentWord()
-                );
+        alert.setContentText(summary);
 
-                alert.setContentText(summary);
+        ButtonType playAgain = new ButtonType("Jugar de Nuevo");
+        ButtonType exit = new ButtonType("Salir");
 
-                ButtonType playAgain = new ButtonType("Jugar de Nuevo");
-                ButtonType exit = new ButtonType("Salir");
+        alert.getButtonTypes().setAll(playAgain, exit);
 
-                alert.getButtonTypes().setAll(playAgain, exit);
+        Optional<ButtonType> result = alert.showAndWait();
 
-                Optional<ButtonType> result = alert.showAndWait();
-
-                if (result.isPresent() && result.get() == playAgain) {
-                    startNewGame();
-                } else {
-                    System.out.println("Timer stopped: " + (gameTimer.getStatus() == Animation.Status.STOPPED));
-                    Platform.exit();
-                    System.exit(0);
-
-
-                }
-            }
+        if (result.isPresent() && result.get() == playAgain) {
+            startNewGame();
+        } else {
+            System.out.println("Timer stopped: " + (gameTimer.getStatus() == Animation.Status.STOPPED));
+            Platform.exit();
+            System.exit(0);
+        }
+    }
 
 
 
