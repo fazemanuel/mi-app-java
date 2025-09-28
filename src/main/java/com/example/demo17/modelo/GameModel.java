@@ -56,7 +56,7 @@ public class GameModel {
         this.random = new Random();
         this.wordBank = initializeWordBank();
         this.maxLevelsCompleted = 0; // Inicializar el récord histórico
-        
+
     }
 
     private List<String> initializeWordBank() {
