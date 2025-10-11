@@ -1,10 +1,20 @@
 package com.example.demo17.modelo;
 
+import com.example.demo17.eventos.ILevelHandler;
+import com.example.demo17.eventos.ITimerHandler;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Model class for the Fast Writing game.
+ * Manages game state, word generation, level progression, and timer.
+ * Now supports event listeners for level and timer events.
+ *
+ * @author Your Name
+ */
 public class GameModel {
 
     /** List of words and phrases used in the game */
@@ -49,15 +59,153 @@ public class GameModel {
     /** Levels interval for time reduction */
     private static final int LEVEL_INTERVAL = 5;
 
-    private boolean booleano;
-    private double numerod;
+    // ========================================
+    // NEW: Event Listeners
+    // ========================================
 
+    /** Registered listeners for level events */
+    private final List<ILevelHandler> levelHandlers = new ArrayList<>();
+
+    /** Registered listeners for timer events */
+    private final List<ITimerHandler> timerHandlers = new ArrayList<>();
+
+
+    /**
+     * Constructor initializes the game model.
+     */
     public GameModel() {
         this.random = new Random();
         this.wordBank = initializeWordBank();
-        this.maxLevelsCompleted = 0; // Inicializar el récord histórico
-
+        this.maxLevelsCompleted = 0;
     }
+
+
+    // ========================================
+    // NEW: Listener Registration Methods
+    // ========================================
+
+    /**
+     * Registers a level event handler.
+     *
+     * @param handler the handler to register
+     */
+    public void addLevelHandler(ILevelHandler handler) {
+        if (handler != null && !levelHandlers.contains(handler)) {
+            levelHandlers.add(handler);
+        }
+    }
+
+    /**
+     * Unregisters a level event handler.
+     *
+     * @param handler the handler to remove
+     */
+    public void removeLevelHandler(ILevelHandler handler) {
+        levelHandlers.remove(handler);
+    }
+
+    /**
+     * Registers a timer event handler.
+     *
+     * @param handler the handler to register
+     */
+    public void addTimerHandler(ITimerHandler handler) {
+        if (handler != null && !timerHandlers.contains(handler)) {
+            timerHandlers.add(handler);
+        }
+    }
+
+    /**
+     * Unregisters a timer event handler.
+     *
+     * @param handler the handler to remove
+     */
+    public void removeTimerHandler(ITimerHandler handler) {
+        timerHandlers.remove(handler);
+    }
+
+    /**
+     * Clears all registered handlers.
+     */
+    public void clearAllHandlers() {
+        levelHandlers.clear();
+        timerHandlers.clear();
+    }
+
+
+    // ========================================
+    // NEW: Event Notification Methods
+    // ========================================
+
+    /**
+     * Notifies all registered handlers that a level was completed.
+     *
+     * @param level the completed level
+     * @param success true if passed
+     */
+    private void notifyLevelCompleted(int level, boolean success) {
+        for (ILevelHandler handler : levelHandlers) {
+            handler.onLevelCompleted(level, success);
+        }
+    }
+
+    /**
+     * Notifies all registered handlers that the level changed.
+     *
+     * @param newLevel the new level number
+     */
+    private void notifyLevelChanged(int newLevel) {
+        for (ILevelHandler handler : levelHandlers) {
+            handler.onLevelChanged(newLevel);
+        }
+    }
+
+    /**
+     * Notifies all registered handlers that the game ended.
+     *
+     * @param finalLevel the final level reached
+     */
+    private void notifyGameEnded(int finalLevel) {
+        for (ILevelHandler handler : levelHandlers) {
+            handler.onGameEnded(finalLevel);
+        }
+    }
+
+    /**
+     * Notifies all registered handlers of a timer tick.
+     *
+     * @param remainingTime seconds remaining
+     */
+    private void notifyTimerTick(int remainingTime) {
+        for (ITimerHandler handler : timerHandlers) {
+            handler.onTimerTick(remainingTime);
+        }
+    }
+
+    /**
+     * Notifies all registered handlers that the timer expired.
+     */
+    private void notifyTimerExpired() {
+        for (ITimerHandler handler : timerHandlers) {
+            handler.onTimerExpired();
+        }
+    }
+
+    /**
+     * Notifies all registered handlers that the timer started.
+     *
+     * @param duration initial duration in seconds
+     */
+    private void notifyTimerStarted(int duration) {
+        for (ITimerHandler handler : timerHandlers) {
+            handler.onTimerStarted(duration);
+        }
+    }
+
+
+    // ========================================
+    // Existing Methods (Some Modified)
+    // ========================================
 
     private List<String> initializeWordBank() {
         return new ArrayList<>(Arrays.asList(
@@ -77,7 +225,7 @@ public class GameModel {
                 "la programacion es divertida", "java es un lenguaje potente",
                 "el desarrollo web moderno", "interfaces graficas intuitivas",
                 "experiencia de usuario excelente", "codigo limpio y mantenible",
-                "patrones de diseÃ±o efectivos", "algoritmos y estructuras de datos",
+                "patrones de diseño efectivos", "algoritmos y estructuras de datos",
                 "desarrollo orientado a eventos", "aplicaciones escalables y robustas"
         ));
     }
@@ -88,14 +236,16 @@ public class GameModel {
         this.remainingTime = timeLimit;
         this.gameRunning = false;
         this.levelCompleted = false;
-        this.currentGameLevelsCompleted = 0; // Solo resetea los niveles de la partida actual
-        // maxLevelsCompleted NO se resetea para mantener el récord histórico
+        this.currentGameLevelsCompleted = 0;
         generateNewWord();
     }
 
     public void startGame() {
         this.gameRunning = true;
         this.remainingTime = timeLimit;
+
+        // NEW: Notify timer started
+        notifyTimerStarted(timeLimit);
     }
 
     public void generateNewWord() {
@@ -104,19 +254,14 @@ public class GameModel {
             return;
         }
 
-        // Select word based on level for progressive difficulty
         int wordIndex;
         if (currentLevel <= 5) {
-            // Simple words for first 5 levels
             wordIndex = random.nextInt(Math.min(10, wordBank.size()));
         } else if (currentLevel <= 10) {
-            // Medium words for levels 6-10
             wordIndex = 10 + random.nextInt(Math.min(10, Math.max(1, wordBank.size() - 10)));
         } else if (currentLevel <= 15) {
-            // Complex words for levels 11-15
             wordIndex = 20 + random.nextInt(Math.min(10, Math.max(1, wordBank.size() - 20)));
         } else {
-            // Phrases for levels 16+
             wordIndex = 30 + random.nextInt(Math.max(1, wordBank.size() - 30));
         }
 
@@ -130,38 +275,62 @@ public class GameModel {
         return userInput.trim().equals(currentWord);
     }
 
+    /**
+     * MODIFIED: Now notifies listeners of level completion.
+     */
     public void completeLevel(boolean success) {
         this.levelCompleted = success;
 
+        // NEW: Notify level completed
+        notifyLevelCompleted(currentLevel, success);
+
         if (success) {
-            // Actualizar niveles completados en la partida actual
             this.currentGameLevelsCompleted = currentLevel;
-
-            // Actualizar el récord histórico si se supera
             this.maxLevelsCompleted = Math.max(maxLevelsCompleted, currentLevel);
-
             advanceToNextLevel();
         } else {
-            // Si fallas, el juego termina
             this.gameRunning = false;
+
+            // NEW: Notify game ended
+            notifyGameEnded(currentLevel);
         }
     }
 
+    /**
+     * MODIFIED: Now notifies listeners of level change.
+     */
     private void advanceToNextLevel() {
         this.currentLevel++;
 
-        // Reduce time every 5 levels
         if (currentLevel % LEVEL_INTERVAL == 1 && currentLevel > 1) {
             this.timeLimit = Math.max(MINIMUM_TIME_LIMIT, timeLimit - TIME_REDUCTION);
         }
 
         this.remainingTime = timeLimit;
         generateNewWord();
+
+        // NEW: Notify level changed
+        notifyLevelChanged(currentLevel);
+
+        // NEW: Notify timer started for new level
+        notifyTimerStarted(timeLimit);
     }
 
+    /**
+     * MODIFIED: Now notifies listeners of timer ticks and expiration.
+     */
     public boolean decrementTime() {
         if (remainingTime > 0) {
             remainingTime--;
+
+            // NEW: Notify timer tick
+            notifyTimerTick(remainingTime);
+
+            if (remainingTime == 0) {
+                // NEW: Notify timer expired
+                notifyTimerExpired();
+            }
+
             return remainingTime > 0;
         }
         return false;
